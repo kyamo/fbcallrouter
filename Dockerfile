@@ -1,5 +1,5 @@
 FROM php:8.1-cli AS base
-WORKDIR /app
+WORKDIR /fbcallrouter
 
 RUN apt-get update && \
     apt-get install -y \
@@ -35,8 +35,29 @@ RUN wget -O vorwahlen.zip "https://www.bundesnetzagentur.de/SharedDocs/Downloads
     rm vorwahlen.zip
 
 FROM base AS final
+
+LABEL description="fbcallrouter - An extended call routing for AVM FRITZ!Box."
+COPY --from=build /fbcallrouter /fbcallrouter
+
 ENV DOCKER_CONTAINER=true
+ENV FRITZ_URL='fritz.box' \
+    FRITZ_USER='admin' \
+    FRITZ_PASS='changeme' \
+    PHONEBOOK_WHITELIST='0' \
+    PHONEBOOK_BLACKLIST='1' \
+    PHONEBOOK_NEWLIST='0' \
+    PHONEBOOK_REFRESH='1' \
+    CONTACT_CALLER='blocked caller' \
+    CONTACT_TIMESTAMP='true' \
+    CONTACT_TYPE='other' \
+    FILTER_MSN='' \
+    FILTER_BLOCKFOREIGN='true' \
+    FILTER_SCORE='6' \
+    FILTER_COMMENTS='3' \
+    LOGGING_LOG='true' \
+    LOGGING_LOGPATH='/var/log/'
 
-COPY --from=build /app /app
+VOLUME fbcallrouter
 
-CMD ["php", "fbcallrouter", "run"]
+ENTRYPOINT [ "sh", "/fbcallrouter/build/docker/docker-entrypoint.sh" ] 
+CMD [ "start" ]
